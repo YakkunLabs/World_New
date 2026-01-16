@@ -4,6 +4,7 @@ public class PlayerMovement : MonoBehaviour
 {
     public CharacterController controller;
     public Transform cam;
+    public Animator animator; // LINK THIS IN INSPECTOR
 
     public float speed = 6f;
     public float jumpHeight = 2f;
@@ -14,42 +15,42 @@ public class PlayerMovement : MonoBehaviour
     Vector3 velocity;
     bool isGrounded;
 
-    // Ground check variables
     public Transform groundCheck;
     public float groundDistance = 0.4f;
     public LayerMask groundMask;
 
     void Start()
     {
-        // Lock cursor to center of screen
         Cursor.lockState = CursorLockMode.Locked;
-        
-        // Auto-get the controller if not assigned
         if (controller == null) controller = GetComponent<CharacterController>();
-        // Auto-get main camera if not assigned
         if (cam == null) cam = Camera.main.transform;
+        
+        // Auto-find animator in children if not assigned
+        if (animator == null) animator = GetComponentInChildren<Animator>();
     }
 
     void Update()
     {
-        // 1. Check if we are on the ground
-        // Simple check: is the controller touching the ground?
         isGrounded = controller.isGrounded; 
 
         if (isGrounded && velocity.y < 0)
         {
-            velocity.y = -2f; // Small downward force to keep player snapped to ground
+            velocity.y = -2f; 
         }
 
-        // 2. Get Input
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
         Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
 
-        // 3. Move and Rotate
+        // --- ANIMATION STEP 1: Calculate Speed ---
+        // If we are moving, speed is 1. If stopped, speed is 0.
+        // We use Damp to make it smooth (0 -> 0.1 -> 0.5...)
+        float targetSpeed = direction.magnitude;
+        animator.SetFloat("Speed", targetSpeed, 0.1f, Time.deltaTime);
+        animator.SetBool("IsGrounded", isGrounded);
+
         if (direction.magnitude >= 0.1f)
         {
-            // Calculate angle to move relative to camera direction
             float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
             float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
             
@@ -59,13 +60,13 @@ public class PlayerMovement : MonoBehaviour
             controller.Move(moveDir.normalized * speed * Time.deltaTime);
         }
 
-        // 4. Jump
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            // --- ANIMATION STEP 2: Trigger Jump ---
+            animator.SetTrigger("Jump");
         }
 
-        // 5. Apply Gravity
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
