@@ -4,9 +4,12 @@ public class PlayerMovement : MonoBehaviour
 {
     public CharacterController controller;
     public Transform cam;
-    public Animator animator; // LINK THIS IN INSPECTOR
+    public Animator animator;
 
-    public float speed = 6f;
+    // 1. Define separate speeds
+    public float walkSpeed = 2f;
+    public float runSpeed = 6f;
+    
     public float jumpHeight = 2f;
     public float gravity = -9.81f;
     public float turnSmoothTime = 0.1f;
@@ -15,40 +18,44 @@ public class PlayerMovement : MonoBehaviour
     Vector3 velocity;
     bool isGrounded;
 
-    public Transform groundCheck;
-    public float groundDistance = 0.4f;
-    public LayerMask groundMask;
-
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         if (controller == null) controller = GetComponent<CharacterController>();
         if (cam == null) cam = Camera.main.transform;
-        
-        // Auto-find animator in children if not assigned
         if (animator == null) animator = GetComponentInChildren<Animator>();
     }
 
     void Update()
     {
         isGrounded = controller.isGrounded; 
+        if (isGrounded && velocity.y < 0) velocity.y = -2f; 
 
-        if (isGrounded && velocity.y < 0)
-        {
-            velocity.y = -2f; 
-        }
+        // 2. Check for Sprint Key (Left Shift)
+        bool isSprinting = Input.GetKey(KeyCode.LeftShift);
+        
+        // 3. Set current speed based on sprint status
+        float currentSpeed = isSprinting ? runSpeed : walkSpeed;
 
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
         Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
 
-        // --- ANIMATION STEP 1: Calculate Speed ---
-        // If we are moving, speed is 1. If stopped, speed is 0.
-        // We use Damp to make it smooth (0 -> 0.1 -> 0.5...)
-        float targetSpeed = direction.magnitude;
-        animator.SetFloat("Speed", targetSpeed, 0.1f, Time.deltaTime);
+        // --- ANIMATION FIX ---
+        // If moving:
+        //   Walk = 0.5 (So the blend tree plays 'Walk')
+        //   Run  = 1.0 (So the blend tree plays 'Run')
+        float animationTarget = 0f;
+        if (direction.magnitude >= 0.1f)
+        {
+            animationTarget = isSprinting ? 1f : 0.5f;
+        }
+
+        // Send to Animator with dampening (smooth transition)
+        animator.SetFloat("Speed", animationTarget, 0.1f, Time.deltaTime);
         animator.SetBool("IsGrounded", isGrounded);
 
+        // --- MOVEMENT ---
         if (direction.magnitude >= 0.1f)
         {
             float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
@@ -57,13 +64,12 @@ public class PlayerMovement : MonoBehaviour
             transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
             Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            controller.Move(moveDir.normalized * speed * Time.deltaTime);
+            controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
         }
 
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            // --- ANIMATION STEP 2: Trigger Jump ---
             animator.SetTrigger("Jump");
         }
 

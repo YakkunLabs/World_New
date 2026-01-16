@@ -384,7 +384,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   target: {fileID: 1269358370}
   mouseSensitivity: 5
-  distanceFromPlayer: 3
+  distanceFromPlayer: 4
   offset: {x: 0, y: 2, z: 0}
   pitchLimits: {x: -40, y: 85}
 --- !u!1 &383841442
@@ -401,6 +401,7 @@ GameObject:
   - component: {fileID: 383841446}
   - component: {fileID: 383841445}
   - component: {fileID: 383841444}
+  - component: {fileID: 383841449}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -439,15 +440,11 @@ MonoBehaviour:
   controller: {fileID: 383841445}
   cam: {fileID: 330585546}
   animator: {fileID: 1269358371}
-  speed: 6
+  walkSpeed: 2
+  runSpeed: 6
   jumpHeight: 2
   gravity: -9.81
   turnSmoothTime: 0.1
-  groundCheck: {fileID: 275985354}
-  groundDistance: 0.4
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 64
 --- !u!143 &383841445
 CharacterController:
   m_ObjectHideFlags: 0
@@ -553,6 +550,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 383841442}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &383841449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 383841442}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0214e7b7cdabb2247b90f6bca61f7e3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkMover
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
